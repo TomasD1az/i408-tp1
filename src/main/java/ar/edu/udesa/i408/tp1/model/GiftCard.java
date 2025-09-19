@@ -13,24 +13,30 @@ public class GiftCard {
     private final String ownerId;
     private BigDecimal balance;
     private final List<Transaction> transactions = new ArrayList<>();
+    private final Clock clock;
 
-    public GiftCard(String code, String ownerId) {
+    public GiftCard(String code, String ownerId, Clock clock) {
         this.code = code;
         this.ownerId = ownerId;
         this.balance = BigDecimal.ZERO;
+        this.clock = clock;
     }
 
     public void load(BigDecimal amount, String merchantId, String description) {
-        if (amount.compareTo(BigDecimal.ZERO) <= 0) throw new IllegalArgumentException("amount must be positive");
+        if (amount.compareTo(BigDecimal.ZERO) <= 0)
+            throw new IllegalArgumentException("amount must be positive");
+
         balance = balance.add(amount);
-        transactions.add(new Transaction(merchantId, amount, description));
+        transactions.add(new Transaction(merchantId, amount, description, clock));
     }
 
     public boolean spend(BigDecimal amount, String merchantId, String description) {
-        if (amount.compareTo(BigDecimal.ZERO) <= 0) throw new IllegalArgumentException("amount must be positive");
+        if (amount.compareTo(BigDecimal.ZERO) <= 0)
+            throw new IllegalArgumentException("amount must be positive");
+
         if (balance.compareTo(amount) >= 0) {
             balance = balance.subtract(amount);
-            transactions.add(new Transaction(merchantId, amount.negate(), description));
+            transactions.add(new Transaction(merchantId, amount.negate(), description, clock));
             return true;
         }
         return false;
@@ -40,4 +46,3 @@ public class GiftCard {
         return Collections.unmodifiableList(transactions);
     }
 }
-

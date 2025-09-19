@@ -13,12 +13,14 @@ public class GiftCardSystemFacade {
     private final Map<String, GiftCard> giftCards;
     private final Map<String, String> merchantsByKey; // merchantKey -> merchantId
     private final Map<String, Token> tokens; // tokenString -> Token
+    private final Clock clock;
 
     public GiftCardSystemFacade() {
         this.users = new HashMap<>();
         this.giftCards = new HashMap<>();
         this.merchantsByKey = new HashMap<>();
         this.tokens = new HashMap<>();
+        this.clock = new Clock();
         preloadData();
     }
 
@@ -30,17 +32,17 @@ public class GiftCardSystemFacade {
         User u4 = new User("u4", "CLU", "clu@perfectsystem.com", "EndOfLine");
         users.put(u1.getId(), u1);
         users.put(u2.getId(), u2);
-        users.put(u3.getId(), u2);
+        users.put(u3.getId(), u3);
         users.put(u4.getId(), u4);
 
         // tarjetas
-        GiftCard g1 = new GiftCard("GC-1001", u1.getId());
+        GiftCard g1 = new GiftCard("GC-1001", u1.getId(), clock);
         g1.load(new BigDecimal("1000.00"), "SYSTEM", "initial load");
-        GiftCard g2 = new GiftCard("GC-2001", u2.getId());
+        GiftCard g2 = new GiftCard("GC-2001", u2.getId(), clock);
         g2.load(new BigDecimal("500.00"), "SYSTEM", "initial load");
-        GiftCard g3 = new GiftCard("GC-3001", u3.getId());
+        GiftCard g3 = new GiftCard("GC-3001", u3.getId(), clock);
         g3.load(new BigDecimal("3000.00"), "SYSTEM", "initial load");
-        GiftCard g4 = new GiftCard("GC-4001", u4.getId());
+        GiftCard g4 = new GiftCard("GC-4001", u4.getId(), clock);
         g4.load(new BigDecimal("4000.00"), "SYSTEM", "initial load");
         giftCards.put(g1.getCode(), g1);
         giftCards.put(g2.getCode(), g2);
@@ -121,12 +123,12 @@ public class GiftCardSystemFacade {
     }
 
     // util: issue gift card to user
-    public void issueGiftCard(String code, String ownerId, BigDecimal initialAmount) {
-        checkValidUser(ownerId);
-        GiftCard gc = new GiftCard(code, ownerId);
-        if (initialAmount != null && initialAmount.compareTo(BigDecimal.ZERO) > 0) {
-            gc.load(initialAmount, "SYSTEM", "initial load");
-        }
-        giftCards.put(code, gc);
-    }
+//    public void issueGiftCard(String code, String ownerId, BigDecimal initialAmount, Clock clock) {
+//        checkValidUser(ownerId);
+//        GiftCard gc = new GiftCard(code, ownerId, clock);
+//        if (initialAmount != null && initialAmount.compareTo(BigDecimal.ZERO) > 0) {
+//            gc.load(initialAmount, "SYSTEM", "initial load");
+//        }
+//        giftCards.put(code, gc);
+//    }
 }

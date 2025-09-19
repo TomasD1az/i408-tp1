@@ -8,20 +8,24 @@ import lombok.Getter;
 public class Token {
     private final String token;
     private final LocalDateTime creationTime;
-    private static final int EXPIRATION_TIME = 300;
+    private static final int EXPIRATION_TIME = 300; // seconds
     private final String username;
     private boolean forcedExpired = false;
+    private final Clock clock;
 
-    public Token(String username) {
+    public Token(String username, Clock clock) {
         this.token = UUID.randomUUID().toString().replace("-", "");
-        this.creationTime = LocalDateTime.now();
+        this.clock = clock;
+        this.creationTime = clock.now();
         this.username = username;
     }
 
     public boolean isValid() {
         return !forcedExpired &&
-                LocalDateTime.now().isBefore(creationTime.plusSeconds(EXPIRATION_TIME));
+                clock.now().isBefore(creationTime.plusSeconds(EXPIRATION_TIME));
     }
 
-    public void forceExpiration() { this.forcedExpired = true;}
+    public void forceExpiration() {
+        this.forcedExpired = true;
+    }
 }

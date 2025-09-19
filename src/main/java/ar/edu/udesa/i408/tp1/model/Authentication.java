@@ -9,9 +9,11 @@ public class Authentication {
     public static final String INVALID_INPUT = "Invalid input";
 
     private final Map<String, User> users;
+    private final Clock clock;
 
-    public Authentication(Map<String, User> users) {
+    public Authentication(Map<String, User> users, Clock clock) {
         this.users = Map.copyOf(users);
+        this.clock = clock;
     }
 
     public Token login(String username, String password) {
@@ -23,7 +25,7 @@ public class Authentication {
         if (!user.getPassword().equals(password)) {
             throw new RuntimeException(PASSWORDS_DO_NOT_MATCH);
         }
-        return new Token(username);
+        return new Token(username, clock);
     }
 
     private void assertValidInput(String username, String password) {

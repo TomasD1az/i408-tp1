@@ -11,10 +11,10 @@ public class Transaction {
     private final LocalDateTime timestamp;
     private final String description;
 
-    public Transaction(String merchantId, BigDecimal amount, String description) {
+    public Transaction(String merchantId, BigDecimal amount, String description, Clock clock) {
         this.merchantId = merchantId;
         this.amount = amount;
         this.description = description;
-        this.timestamp = LocalDateTime.now();
+        this.timestamp = clock.now();
     }
 }
