@@ -7,7 +7,6 @@ import java.math.BigDecimal;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-
 public class GiftCardSystemFacadeTest {
 
     private GiftCardSystemFacade facade;
@@ -15,57 +14,59 @@ public class GiftCardSystemFacadeTest {
     @BeforeEach
     public void setUp() {
         facade = new GiftCardSystemFacade();
-        // El constructor del facade ya precarga usuarios,
-        // pero agregamos otro usuario/controlado para test
-        facade.issueGiftCard("gc1", "u1", BigDecimal.ZERO);
     }
 
     @Test
-    public void userCanLoadBalanceIntoGiftCard() {
-        // usamos issueGiftCard con monto inicial
-        facade.issueGiftCard("gcLoad", "u1", new BigDecimal("100.00"));
-        assertEquals(new BigDecimal("100.00"), facade.getBalance("gcLoad"));
+    public void preloadedGiftCardsAreAvailable() {
+        // u1 should have GC-1001 preloaded with 1000
+        assertEquals(new BigDecimal("1000.00"), facade.getBalance("GC-1001"));
+
+        // u2 should have GC-2001 preloaded with 500
+        assertEquals(new BigDecimal("500.00"), facade.getBalance("GC-2001"));
+
+        // u3 should have GC-3001 preloaded with 3000
+        assertEquals(new BigDecimal("3000.00"), facade.getBalance("GC-3001"));
+
+        // u4 should have GC-4001 preloaded with 4000
+        assertEquals(new BigDecimal("4000.00"), facade.getBalance("GC-4001"));
     }
 
     @Test
     public void userCanSpendFromGiftCardWhenEnoughBalance() {
-        facade.issueGiftCard("gcSpend", "u1", new BigDecimal("50.00"));
-        // simulamos gasto de merchant
-        facade.merchantCharge("merchant-key-abc", "gcSpend", new BigDecimal("20.00"), "test spend");
-        assertEquals(new BigDecimal("30.00"), facade.getBalance("gcSpend"));
+        facade.merchantCharge("merchant-key-abc", "GC-1001", new BigDecimal("200.00"), "test spend");
+        assertEquals(new BigDecimal("800.00"), facade.getBalance("GC-1001"));
     }
 
     @Test
     public void spendingMoreThanBalanceThrowsError() {
-        facade.issueGiftCard("gcLow", "u1", new BigDecimal("30.00"));
-
         RuntimeException exception = assertThrows(RuntimeException.class, () ->
-                facade.merchantCharge("merchant-key-abc", "gcLow", new BigDecimal("50.00"), "overspend")
+                facade.merchantCharge("merchant-key-abc", "GC-2001", new BigDecimal("1000.00"), "overspend")
         );
-
         assertEquals(GiftCardSystemFacade.insufficientBalanceErrorDescription, exception.getMessage());
     }
 
     @Test
-    public void loadingBalanceOnInvalidGiftCardThrowsError() {
+    public void queryingInvalidGiftCardThrowsError() {
         RuntimeException exception = assertThrows(RuntimeException.class, () ->
                 facade.getBalance("invalidCode")
         );
-
         assertEquals(GiftCardSystemFacade.invalidGiftCardErrorDescription, exception.getMessage());
     }
 
     @Test
-    public void issuingGiftCardForInvalidUserThrowsError() {
+    public void merchantChargeWithInvalidKeyThrowsError() {
         RuntimeException exception = assertThrows(RuntimeException.class, () ->
-                facade.issueGiftCard("gcInvalid", "notAUser", BigDecimal.ZERO)
+                facade.merchantCharge("bad-merchant", "GC-1001", new BigDecimal("50.00"), "test")
         );
-
-        assertEquals(GiftCardSystemFacade.invalidUserErrorDescription, exception.getMessage());
+        assertEquals(GiftCardSystemFacade.invalidMerchantErrorDescription, exception.getMessage());
     }
 
     @Test
-    public void checkBalanceOfNewGiftCardIsZero() {
-        assertEquals(0, BigDecimal.ZERO.compareTo(facade.getBalance("gc1")));
+    public void transactionHistoryIsUpdatedOnSpend() {
+        int before = facade.getTransactions("GC-1001").size();
+        facade.merchantCharge("merchant-key-abc", "GC-1001", new BigDecimal("100.00"), "spend test");
+        int after = facade.getTransactions("GC-1001").size();
+
+        assertEquals(before + 1, after);
     }
 }
