@@ -9,23 +9,35 @@ public class Token {
     private final String token;
     private final LocalDateTime creationTime;
     private static final int EXPIRATION_TIME = 300; // seconds
-    private final String username;
-    private boolean forcedExpired = false;
+    private final String userId; // Changed from username to userId
     private final Clock clock;
 
-    public Token(String username, Clock clock) {
+    // public Token(String userId, Clock clock) {
+    //     this.token = UUID.randomUUID().toString().replace("-", "");
+    //     this.clock = clock;
+    //     this.creationTime = clock.now();
+    //     this.userId = userId; // Store userId instead of username
+    // }
+    public Token(String userId, Clock clock) {
         this.token = UUID.randomUUID().toString().replace("-", "");
         this.clock = clock;
+//        LocalDateTime now = clock.now();
         this.creationTime = clock.now();
-        this.username = username;
+        this.userId = userId;
     }
 
     public boolean isValid() {
-        return !forcedExpired &&
-                clock.now().isBefore(creationTime.plusSeconds(EXPIRATION_TIME));
+        return clock.now().isBefore(creationTime.plusSeconds(EXPIRATION_TIME));
     }
 
-    public void forceExpiration() {
-        this.forcedExpired = true;
-    }
+//    public boolean isValid() {
+//        LocalDateTime now = clock.now();
+//        LocalDateTime expirationTime = creationTime.plusSeconds(EXPIRATION_TIME);
+//        boolean result = now.isBefore(expirationTime);
+//
+//        System.out.println("DEBUG Token.isValid(): now=" + now + ", expirationTime=" + expirationTime + ", result=" + result);
+//
+//        return result;
+//    }
+
 }

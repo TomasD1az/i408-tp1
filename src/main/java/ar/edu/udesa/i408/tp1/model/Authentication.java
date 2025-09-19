@@ -2,7 +2,6 @@ package ar.edu.udesa.i408.tp1.model;
 
 import java.util.Map;
 
-
 public class Authentication {
     public static final String USER_NOT_FOUND = "User not found";
     public static final String PASSWORDS_DO_NOT_MATCH = "Passwords do not match";
@@ -16,20 +15,20 @@ public class Authentication {
         this.clock = clock;
     }
 
-    public Token login(String username, String password) {
-        assertValidInput(username, password);
-        User user = users.get(username);
+    public Token login(String userId, String password) {
+        assertValidInput(userId, password);
+        User user = users.get(userId); // Now looking up by userId, not username
         if (user == null) {
             throw new RuntimeException(USER_NOT_FOUND);
         }
         if (!user.getPassword().equals(password)) {
             throw new RuntimeException(PASSWORDS_DO_NOT_MATCH);
         }
-        return new Token(username, clock);
+        return new Token(userId, clock); // Pass userId to token
     }
 
-    private void assertValidInput(String username, String password) {
-        if (username == null || password == null || username.isEmpty() || password.isEmpty()) {
+    private void assertValidInput(String userId, String password) {
+        if (userId == null || password == null || userId.isEmpty() || password.isEmpty()) {
             throw new RuntimeException(INVALID_INPUT);
         }
     }

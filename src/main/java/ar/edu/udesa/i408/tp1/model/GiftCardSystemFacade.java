@@ -4,15 +4,17 @@ import java.math.BigDecimal;
 import java.util.*;
 
 public class GiftCardSystemFacade {
-    public static String invalidUserErrorDescription = "Invalid user id";
+    public static String invalidTokenErrorDescription = "Invalid or expired token";
     public static String invalidGiftCardErrorDescription = "Invalid gift card code";
     public static String insufficientBalanceErrorDescription = "Not enough balance";
     public static String invalidMerchantErrorDescription = "Invalid merchant key";
+    public static String giftCardNotOwnedByUserErrorDescription = "Gift card not owned by user";
 
     private final Map<String, User> users;
     private final Map<String, GiftCard> giftCards;
     private final Map<String, String> merchantsByKey; // merchantKey -> merchantId
     private final Map<String, Token> tokens; // tokenString -> Token
+    private final Authentication authentication;
     private final Clock clock;
 
     public GiftCardSystemFacade() {
@@ -21,11 +23,23 @@ public class GiftCardSystemFacade {
         this.merchantsByKey = new HashMap<>();
         this.tokens = new HashMap<>();
         this.clock = new Clock();
+        this.authentication = new Authentication(users, clock);
         preloadData();
     }
 
+    // For testing - constructor with dependencies (following TusLibros pattern)
+    public GiftCardSystemFacade(Map<String, User> users, Map<String, GiftCard> giftCards,
+                                Map<String, String> merchantsByKey, Clock clock) {
+        this.users = users;
+        this.giftCards = giftCards;
+        this.merchantsByKey = merchantsByKey;
+        this.tokens = new HashMap<>();
+        this.clock = clock;
+        this.authentication = new Authentication(users, clock);
+    }
+
     private void preloadData() {
-        // ejemplo de precarga: usuarios
+        // Users
         User u1 = new User("u1", "Manuel", "mramirezsilva@udesa.edu.ar", "Pinamar123");
         User u2 = new User("u2", "Tomas", "tdiaz@udesa.edu.ar", "CampoGrande2025");
         User u3 = new User("u3", "Tron", "tron@defender.com", "DefendTheUser");
@@ -35,78 +49,113 @@ public class GiftCardSystemFacade {
         users.put(u3.getId(), u3);
         users.put(u4.getId(), u4);
 
-        // tarjetas
-        GiftCard g1 = new GiftCard("GC-1001", u1.getId(), clock);
+        // Gift Cards
+        GiftCard g1 = new GiftCard("GC-1001", "u1", clock);
         g1.load(new BigDecimal("1000.00"), "SYSTEM", "initial load");
-        GiftCard g2 = new GiftCard("GC-2001", u2.getId(), clock);
+        GiftCard g2 = new GiftCard("GC-2001", "u2", clock);
         g2.load(new BigDecimal("500.00"), "SYSTEM", "initial load");
-        GiftCard g3 = new GiftCard("GC-3001", u3.getId(), clock);
+        GiftCard g3 = new GiftCard("GC-3001", "u3", clock);
         g3.load(new BigDecimal("3000.00"), "SYSTEM", "initial load");
-        GiftCard g4 = new GiftCard("GC-4001", u4.getId(), clock);
+        GiftCard g4 = new GiftCard("GC-4001", "u4", clock);
         g4.load(new BigDecimal("4000.00"), "SYSTEM", "initial load");
+
         giftCards.put(g1.getCode(), g1);
         giftCards.put(g2.getCode(), g2);
         giftCards.put(g3.getCode(), g3);
         giftCards.put(g4.getCode(), g4);
 
-        // merchants: clave pública (merchantKey) -> merchantId
+        // Merchants
         merchantsByKey.put("merchant-key-abc", "m-abc");
         merchantsByKey.put("merchant-key-xyz", "m-xyz");
         merchantsByKey.put("merchant-key-123", "m-123");
         merchantsByKey.put("merchant-key-456", "m-456");
     }
 
-    // AUTH helper
-    public void storeToken(Token token) {
+    // Authentication operations - following TusLibros validation pattern
+    public String login(String userId, String password) {
+        // Let Authentication handle validation and throw appropriate exceptions
+        Token token = authentication.login(userId, password);
         tokens.put(token.getToken(), token);
+        return token.getToken();
     }
 
-    public Optional<String> usernameForToken(String tokenString) {
-        Token t = tokens.get(tokenString);
-        if (t == null) return Optional.empty();
-        if (!t.isValid()) {
-            tokens.remove(tokenString);
-            return Optional.empty();
-        }
-        return Optional.of(t.getUsername());
+    public void logout(String tokenString) {
+        // Simply remove the token - no need to force expiration
+        tokens.remove(tokenString);
     }
 
-    // LISTAR giftcards de un usuario
-    public List<GiftCard> giftCardsOfUser(String userId) {
-        checkValidUser(userId);
-        List<GiftCard> res = new ArrayList<>();
-        for (GiftCard gc : giftCards.values()) {
-            if (gc.getOwnerId().equals(userId)) res.add(gc);
-        }
-        return res;
+    // Gift card operations (require valid token)
+    public List<GiftCard> claimGiftCards(String tokenString) {
+        String userId = validateTokenAndGetUserId(tokenString);
+        return giftCardsOwnedBy(userId);
     }
 
-    // CONSULTAR SALDO
-    public BigDecimal getBalance(String giftCardCode) {
-        GiftCard gc = giftCardIdentifiedAs(giftCardCode);
-        return gc.getBalance();
+    public BigDecimal getBalance(String tokenString, String giftCardCode) {
+        String userId = validateTokenAndGetUserId(tokenString);
+        GiftCard giftCard = giftCardOwnedBy(userId, giftCardCode);
+        return giftCard.getBalance();
     }
 
-    // CONSULTAR DETALLE
-    public List<Transaction> getTransactions(String giftCardCode) {
-        GiftCard gc = giftCardIdentifiedAs(giftCardCode);
-        return gc.getTransactionHistory();
+    public List<Transaction> getTransactionHistory(String tokenString, String giftCardCode) {
+        String userId = validateTokenAndGetUserId(tokenString);
+        GiftCard giftCard = giftCardOwnedBy(userId, giftCardCode);
+        return giftCard.getTransactionHistory();
     }
 
-    // CARGAR / SPEND triggered by merchant using merchantKey
+    // Merchant operations - following TusLibros merchant validation pattern
     public void merchantCharge(String merchantKey, String giftCardCode, BigDecimal amount, String description) {
-        String merchantId = merchantsByKey.get(merchantKey);
-        if (merchantId == null) throw new RuntimeException(invalidMerchantErrorDescription);
-        GiftCard gc = giftCardIdentifiedAs(giftCardCode);
-        boolean ok = gc.spend(amount, merchantId, description);
-        if (!ok) throw new RuntimeException(insufficientBalanceErrorDescription);
+        String merchantId = validateMerchantKey(merchantKey);
+        GiftCard giftCard = giftCardIdentifiedAs(giftCardCode);
+
+        if (!giftCard.spend(amount, merchantId, description)) {
+            throw new RuntimeException(insufficientBalanceErrorDescription);
+        }
     }
 
-    // helper checks
-    private void checkValidUser(String id) {
-        if (!users.containsKey(id)) {
-            throw new RuntimeException(invalidUserErrorDescription);
+    // Validation methods following TusLibros patterns
+    private String validateTokenAndGetUserId(String tokenString) {
+        Token token = tokenIdentifiedAs(tokenString);
+        checkTokenIsActive(token, tokenString);
+        return token.getUserId(); // Fixed: use getUserId() instead of getUsername()
+    }
+
+    private Token tokenIdentifiedAs(String tokenString) {
+        Token token = tokens.get(tokenString);
+        if (token == null) {
+            throw new RuntimeException(invalidTokenErrorDescription);
         }
+        return token;
+    }
+
+    private void checkTokenIsActive(Token token, String tokenString) {
+        boolean isValid = token.isValid();
+        if (!isValid) {
+            tokens.remove(tokenString);
+            throw new RuntimeException(invalidTokenErrorDescription);
+        }
+    }
+
+    // Following TusLibros merchant validation pattern
+    private String validateMerchantKey(String merchantKey) {
+        String merchantId = merchantsByKey.get(merchantKey);
+        if (merchantId == null) {
+            throw new RuntimeException(invalidMerchantErrorDescription);
+        }
+        return merchantId;
+    }
+
+    private List<GiftCard> giftCardsOwnedBy(String userId) {
+        return giftCards.values().stream()
+                .filter(gc -> gc.getOwnerId().equals(userId))
+                .toList();
+    }
+
+    private GiftCard giftCardOwnedBy(String userId, String giftCardCode) {
+        GiftCard giftCard = giftCardIdentifiedAs(giftCardCode);
+        if (!giftCard.getOwnerId().equals(userId)) {
+            throw new RuntimeException(giftCardNotOwnedByUserErrorDescription);
+        }
+        return giftCard;
     }
 
     private GiftCard giftCardIdentifiedAs(String code) {
@@ -117,18 +166,8 @@ public class GiftCardSystemFacade {
         return giftCard;
     }
 
-    // util: crear merchant (para tests)
-    public void addMerchant(String merchantKey, String merchantId) {
-        merchantsByKey.put(merchantKey, merchantId);
-    }
-
-    // util: issue gift card to user
-//    public void issueGiftCard(String code, String ownerId, BigDecimal initialAmount, Clock clock) {
-//        checkValidUser(ownerId);
-//        GiftCard gc = new GiftCard(code, ownerId, clock);
-//        if (initialAmount != null && initialAmount.compareTo(BigDecimal.ZERO) > 0) {
-//            gc.load(initialAmount, "SYSTEM", "initial load");
-//        }
-//        giftCards.put(code, gc);
-//    }
+    public Clock clock() { return clock; }
+    public Map<String, User> users() { return users; }
+    public Map<String, GiftCard> giftCards() { return giftCards; }
+    public Map<String, String> merchantsByKey() { return merchantsByKey; }
 }
