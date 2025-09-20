@@ -9,19 +9,19 @@ public class TokenTest {
     @Test
     public void newTokenIsValid() {
         Clock clock = new Clock();
-        Token token = new Token("testUser", clock);
+        Session session = new Session("testUser", clock);
 
-        assertTrue(token.isValid());
-        assertEquals("testUser", token.getUserId());
-        assertNotNull(token.getToken());
+        assertTrue(session.isValid());
+        assertEquals("testUser", session.getUserId());
+        assertNotNull(session.getToken());
     }
 
     @Test
     public void tokensHaveUniqueIds() {
         Clock clock = new Clock();
-        Token token1 = new Token("user1", clock);
-        Token token2 = new Token("user2", clock);
+        Session session1 = new Session("user1", clock);
+        Session session2 = new Session("user2", clock);
 
-        assertNotEquals(token1.getToken(), token2.getToken());
+        assertNotEquals(session1.getToken(), session2.getToken());
     }
 }

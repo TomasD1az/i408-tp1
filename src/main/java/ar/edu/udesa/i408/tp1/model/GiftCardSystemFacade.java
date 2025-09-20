@@ -13,7 +13,7 @@ public class GiftCardSystemFacade {
     private final Map<String, User> users;
     private final Map<String, GiftCard> giftCards;
     private final Map<String, String> merchantsByKey; // merchantKey -> merchantId
-    private final Map<String, Token> tokens; // tokenString -> Token
+    private final Map<String, Session> tokens; // tokenString -> Token
     private final Authentication authentication;
     private final Clock clock;
 
@@ -74,7 +74,7 @@ public class GiftCardSystemFacade {
     // Authentication operations - following TusLibros validation pattern
     public String login(String userId, String password) {
         // Let Authentication handle validation and throw appropriate exceptions
-        Token token = authentication.login(userId, password);
+        Session token = authentication.login(userId, password);
         tokens.put(token.getToken(), token);
         return token.getToken();
     }
@@ -114,21 +114,21 @@ public class GiftCardSystemFacade {
 
     // Validation methods following TusLibros patterns
     private String validateTokenAndGetUserId(String tokenString) {
-        Token token = tokenIdentifiedAs(tokenString);
+        Session token = tokenIdentifiedAs(tokenString);
         checkTokenIsActive(token, tokenString);
         return token.getUserId(); // Fixed: use getUserId() instead of getUsername()
     }
 
-    private Token tokenIdentifiedAs(String tokenString) {
-        Token token = tokens.get(tokenString);
+    private Session tokenIdentifiedAs(String tokenString) {
+        Session token = tokens.get(tokenString);
         if (token == null) {
             throw new RuntimeException(invalidTokenErrorDescription);
         }
         return token;
     }
 
-    private void checkTokenIsActive(Token token, String tokenString) {
-        boolean isValid = token.isValid();
+    private void checkTokenIsActive(Session session, String tokenString) {
+        boolean isValid = session.isValid();
         if (!isValid) {
             tokens.remove(tokenString);
             throw new RuntimeException(invalidTokenErrorDescription);

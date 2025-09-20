@@ -15,7 +15,7 @@ public class Authentication {
         this.clock = clock;
     }
 
-    public Token login(String userId, String password) {
+    public Session login(String userId, String password) {
         assertValidInput(userId, password);
         User user = users.get(userId); // Now looking up by userId, not username
         if (user == null) {
@@ -24,7 +24,7 @@ public class Authentication {
         if (!user.getPassword().equals(password)) {
             throw new RuntimeException(PASSWORDS_DO_NOT_MATCH);
         }
-        return new Token(userId, clock); // Pass userId to token
+        return new Session(userId, clock); // Pass userId to token
     }
 
     private void assertValidInput(String userId, String password) {

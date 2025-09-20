@@ -16,7 +16,7 @@ public class AuthenticationTest {
         Clock clock = new Clock();
         Authentication auth = new Authentication(users, clock);
 
-        Token token = auth.login("testUser", "password123");
+        Session token = auth.login("testUser", "password123");
 
         assertNotNull(token);
         assertEquals("testUser", token.getUserId());
