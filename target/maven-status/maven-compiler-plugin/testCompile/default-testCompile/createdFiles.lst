@@ -1,0 +1,5 @@
+ar/edu/udesa/i408/tp1/model/CheckHTTPResponse.class
+ar/edu/udesa/i408/tp1/Tp1ApplicationTests.class
+ar/edu/udesa/i408/tp1/model/GiftCardSystemFacadeTest.class
+ar/edu/udesa/i408/tp1/integration/RestApiIntegrationTest.class
+ar/edu/udesa/i408/tp1/model/AuthenticationTest.class

@@ -12,8 +12,8 @@ public class GiftCardSystemFacade {
 
     private final Map<String, User> users;
     private final Map<String, GiftCard> giftCards;
-    private final Map<String, String> merchantsByKey; // merchantKey -> merchantId
-    private final Map<String, Session> tokens; // tokenString -> Token
+    private final Map<String, String> merchantsByKey;
+    private final Map<String, Session> tokens;
     private final Authentication authentication;
     private final Clock clock;
 
@@ -27,7 +27,6 @@ public class GiftCardSystemFacade {
         preloadData();
     }
 
-    // For testing - constructor with dependencies (following TusLibros pattern)
     public GiftCardSystemFacade(Map<String, User> users, Map<String, GiftCard> giftCards,
                                 Map<String, String> merchantsByKey, Clock clock) {
         this.users = users;
@@ -39,7 +38,6 @@ public class GiftCardSystemFacade {
     }
 
     private void preloadData() {
-        // Users
         User u1 = new User("u1", "Manuel", "mramirezsilva@udesa.edu.ar", "Pinamar123");
         User u2 = new User("u2", "Tomas", "tdiaz@udesa.edu.ar", "CampoGrande2025");
         User u3 = new User("u3", "Tron", "tron@defender.com", "DefendTheUser");
@@ -49,7 +47,6 @@ public class GiftCardSystemFacade {
         users.put(u3.getId(), u3);
         users.put(u4.getId(), u4);
 
-        // Gift Cards
         GiftCard g1 = new GiftCard("GC-1001", "u1", clock);
         g1.load(new BigDecimal("1000.00"), "SYSTEM", "initial load");
         GiftCard g2 = new GiftCard("GC-2001", "u2", clock);
@@ -71,20 +68,16 @@ public class GiftCardSystemFacade {
         merchantsByKey.put("merchant-key-456", "m-456");
     }
 
-    // Authentication operations - following TusLibros validation pattern
     public String login(String userId, String password) {
-        // Let Authentication handle validation and throw appropriate exceptions
         Session token = authentication.login(userId, password);
         tokens.put(token.getToken(), token);
         return token.getToken();
     }
 
     public void logout(String tokenString) {
-        // Simply remove the token - no need to force expiration
         tokens.remove(tokenString);
     }
 
-    // Gift card operations (require valid token)
     public List<GiftCard> claimGiftCards(String tokenString) {
         String userId = validateTokenAndGetUserId(tokenString);
         return giftCardsOwnedBy(userId);
@@ -102,7 +95,6 @@ public class GiftCardSystemFacade {
         return giftCard.getTransactionHistory();
     }
 
-    // Merchant operations - following TusLibros merchant validation pattern
     public void merchantCharge(String merchantKey, String giftCardCode, BigDecimal amount, String description) {
         String merchantId = validateMerchantKey(merchantKey);
         GiftCard giftCard = giftCardIdentifiedAs(giftCardCode);
@@ -112,11 +104,10 @@ public class GiftCardSystemFacade {
         }
     }
 
-    // Validation methods following TusLibros patterns
     private String validateTokenAndGetUserId(String tokenString) {
         Session token = tokenIdentifiedAs(tokenString);
         checkTokenIsActive(token, tokenString);
-        return token.getUserId(); // Fixed: use getUserId() instead of getUsername()
+        return token.getUserId();
     }
 
     private Session tokenIdentifiedAs(String tokenString) {
@@ -127,15 +118,14 @@ public class GiftCardSystemFacade {
         return token;
     }
 
-    private void checkTokenIsActive(Session session, String tokenString) {
-        boolean isValid = session.isValid();
+    private void checkTokenIsActive(Session token, String tokenString) {
+        boolean isValid = token.isValid();
         if (!isValid) {
             tokens.remove(tokenString);
             throw new RuntimeException(invalidTokenErrorDescription);
         }
     }
 
-    // Following TusLibros merchant validation pattern
     private String validateMerchantKey(String merchantKey) {
         String merchantId = merchantsByKey.get(merchantKey);
         if (merchantId == null) {
