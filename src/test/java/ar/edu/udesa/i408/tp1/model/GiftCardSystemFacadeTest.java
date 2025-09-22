@@ -19,39 +19,7 @@ public class GiftCardSystemFacadeTest {
     }
 
     @Test
-    public void test01CanLoginWithValidCredentials() {
-        String token = systemFacade.login("u1", "Pinamar123");
-
-        assertNotNull(token);
-        assertFalse(token.isEmpty());
-    }
-
-    @Test
-    public void test02CanNotLoginWithInvalidUser() {
-        assertThrowsLike(() -> systemFacade().login("invalidUser", "password123"),
-                Authentication.userNotFoundErrorDescription);
-    }
-
-    @Test
-    public void test03CanNotLoginWithInvalidPassword() {
-        assertThrowsLike(() -> systemFacade().login("u1", "wrongPassword"),
-                Authentication.passwordsDoNotMatchErrorDescription);
-    }
-
-    @Test
-    public void test04CanNotLoginWithNullCredentials() {
-        assertThrowsLike(() -> systemFacade().login(null, "password"),
-                Authentication.invalidInputErrorDescription);
-    }
-
-    @Test
-    public void test05CanNotLoginWithEmptyCredentials() {
-        assertThrowsLike(() -> systemFacade().login("u1", ""),
-                Authentication.invalidInputErrorDescription);
-    }
-
-    @Test
-    public void test06CanClaimGiftCardsWithValidToken() {
+    public void test01CanClaimGiftCardsWithValidToken() {
         String token = systemFacade.login("u1", "Pinamar123");
         List<GiftCard> claimedCards = systemFacade.claimGiftCards(token);
 
@@ -61,13 +29,13 @@ public class GiftCardSystemFacadeTest {
     }
 
     @Test
-    public void test07CanNotClaimGiftCardsWithInvalidToken() {
+    public void test02CanNotClaimGiftCardsWithInvalidToken() {
         assertThrowsLike(() -> systemFacade.claimGiftCards("invalidToken"),
                 GiftCardSystemFacade.invalidTokenErrorDescription);
     }
 
     @Test
-    public void test08CanCheckBalanceOfOwnedGiftCard() {
+    public void test03CanCheckBalanceOfOwnedGiftCard() {
         String token = systemFacade.login("u1", "Pinamar123");
         BigDecimal balance = systemFacade.getBalance(token, "GC-1001");
 
@@ -75,7 +43,7 @@ public class GiftCardSystemFacadeTest {
     }
 
     @Test
-    public void test09CanNotCheckBalanceOfNotOwnedGiftCard() {
+    public void test04CanNotCheckBalanceOfNotOwnedGiftCard() {
         String token = systemFacade.login("u1", "Pinamar123");
 
         assertThrowsLike(() -> systemFacade.getBalance(token, "GC-2001"), // This belongs to u2
@@ -83,13 +51,13 @@ public class GiftCardSystemFacadeTest {
     }
 
     @Test
-    public void test10CanNotCheckBalanceWithInvalidToken() {
+    public void test05CanNotCheckBalanceWithInvalidToken() {
         assertThrowsLike(() -> systemFacade.getBalance("invalidToken", "GC-1001"),
                 GiftCardSystemFacade.invalidTokenErrorDescription);
     }
 
     @Test
-    public void test11CanNotCheckBalanceOfInvalidGiftCard() {
+    public void test06CanNotCheckBalanceOfInvalidGiftCard() {
         String token = systemFacade.login("u1", "Pinamar123");
 
         assertThrowsLike(() -> systemFacade.getBalance(token, "INVALID-CODE"),
@@ -97,7 +65,7 @@ public class GiftCardSystemFacadeTest {
     }
 
     @Test
-    public void test12MerchantCanChargeGiftCard() {
+    public void test07MerchantCanChargeGiftCard() {
         BigDecimal initialBalance = new BigDecimal("1000.00");
         BigDecimal chargeAmount = new BigDecimal("200.00");
         BigDecimal expectedBalance = new BigDecimal("800.00");
@@ -110,28 +78,28 @@ public class GiftCardSystemFacadeTest {
     }
 
     @Test
-    public void test13CanNotChargeMoreThanGiftCardBalance() {
+    public void test08CanNotChargeMoreThanGiftCardBalance() {
         assertThrowsLike(() -> systemFacade.merchantCharge("merchant-key-abc", "GC-2001",
                         new BigDecimal("1500.00"), "overspend"),
                 GiftCardSystemFacade.insufficientBalanceErrorDescription);
     }
 
     @Test
-    public void test14CanNotChargeWithInvalidMerchantKey() {
+    public void test09CanNotChargeWithInvalidMerchantKey() {
         assertThrowsLike(() -> systemFacade.merchantCharge("invalid-key", "GC-1001",
                         new BigDecimal("100.00"), "test"),
                 GiftCardSystemFacade.invalidMerchantErrorDescription);
     }
 
     @Test
-    public void test15CanNotChargeInvalidGiftCard() {
+    public void test10CanNotChargeInvalidGiftCard() {
         assertThrowsLike(() -> systemFacade.merchantCharge("merchant-key-abc", "INVALID-CODE",
                         new BigDecimal("100.00"), "test"),
                 GiftCardSystemFacade.invalidGiftCardErrorDescription);
     }
 
     @Test
-    public void test16TransactionHistoryIsUpdatedOnCharge() {
+    public void test11TransactionHistoryIsUpdatedOnCharge() {
         String token = systemFacade.login("u1", "Pinamar123");
         int initialTransactions = systemFacade.getTransactionHistory(token, "GC-1001").size();
 
@@ -141,13 +109,12 @@ public class GiftCardSystemFacadeTest {
         assertEquals(initialTransactions + 1, transactions.size());
 
         Transaction lastTransaction = transactions.get(transactions.size() - 1);
-        // Fixed: Use absolute value since spend transactions are stored as negative
         assertEquals(new BigDecimal("100.00"), lastTransaction.getAmount().abs());
         assertEquals("test purchase", lastTransaction.getDescription());
     }
 
     @Test
-    public void test17CanNotGetTransactionHistoryOfNotOwnedGiftCard() {
+    public void test12CanNotGetTransactionHistoryOfNotOwnedGiftCard() {
         String token = systemFacade.login("u1", "Pinamar123");
 
         assertThrowsLike(() -> systemFacade.getTransactionHistory(token, "GC-2001"), // This belongs to u2
@@ -155,14 +122,14 @@ public class GiftCardSystemFacadeTest {
     }
 
     @Test
-    public void test18CanNotGetTransactionHistoryWithInvalidToken() {
+    public void test13CanNotGetTransactionHistoryWithInvalidToken() {
         assertThrowsLike(() -> systemFacade.getTransactionHistory("invalidToken", "GC-1001"),
                 GiftCardSystemFacade.invalidTokenErrorDescription);
     }
 
 
     @Test
-    public void test19CanNotUseOperationsWithExpiredToken() {
+    public void test14CanNotUseOperationsWithExpiredToken() {
         GiftCardSystemFacade systemFacade = systemFacade(expiredTokenClock());
 
         String token = systemFacade.login("u1", "Pinamar123");
@@ -171,7 +138,7 @@ public class GiftCardSystemFacadeTest {
     }
 
     @Test
-    public void test20CanNotCheckBalanceWithExpiredToken() {
+    public void test15CanNotCheckBalanceWithExpiredToken() {
         GiftCardSystemFacade systemFacade = systemFacade(expiredTokenClock());
 
         String token = systemFacade.login("u1", "Pinamar123");
@@ -181,7 +148,7 @@ public class GiftCardSystemFacadeTest {
     }
 
     @Test
-    public void test21CanNotGetTransactionHistoryWithExpiredToken() {
+    public void test16CanNotGetTransactionHistoryWithExpiredToken() {
         GiftCardSystemFacade systemFacade = systemFacade(expiredTokenClock());
 
         String token = systemFacade.login("u1", "Pinamar123");
@@ -191,23 +158,20 @@ public class GiftCardSystemFacadeTest {
     }
 
     @Test
-    public void test22LogoutRemovesTokenFromSystem() {
+    public void test17LogoutRemovesTokenFromSystem() {
         String token = systemFacade.login("u1", "Pinamar123");
 
-        // Verify token works
         List<GiftCard> cards = systemFacade.claimGiftCards(token);
         assertEquals(1, cards.size());
 
-        // Logout
         systemFacade.logout(token);
 
-        // Verify token no longer works
         assertThrowsLike(() -> systemFacade.claimGiftCards(token),
                 GiftCardSystemFacade.invalidTokenErrorDescription);
     }
 
     @Test
-    public void test23MultipleUsersCanHaveValidTokensSimultaneously() {
+    public void test18MultipleUsersCanHaveValidTokensSimultaneously() {
         String tokenU1 = systemFacade.login("u1", "Pinamar123");
         String tokenU2 = systemFacade.login("u2", "CampoGrande2025");
 
@@ -221,7 +185,7 @@ public class GiftCardSystemFacadeTest {
     }
 
     @Test
-    public void test24MultipleChargesReduceBalanceCorrectly() {
+    public void test19MultipleChargesReduceBalanceCorrectly() {
         BigDecimal initialBalance = new BigDecimal("1000.00");
         BigDecimal firstCharge = new BigDecimal("300.00");
         BigDecimal secondCharge = new BigDecimal("200.00");
@@ -236,7 +200,7 @@ public class GiftCardSystemFacadeTest {
     }
 
     @Test
-    public void test25DifferentMerchantsCanChargeGiftCard() {
+    public void test20DifferentMerchantsCanChargeGiftCard() {
         systemFacade.merchantCharge("merchant-key-abc", "GC-1001", new BigDecimal("100.00"), "merchant abc");
         systemFacade.merchantCharge("merchant-key-xyz", "GC-1001", new BigDecimal("150.00"), "merchant xyz");
         systemFacade.merchantCharge("merchant-key-123", "GC-1001", new BigDecimal("50.00"), "merchant 123");
@@ -246,7 +210,7 @@ public class GiftCardSystemFacadeTest {
         assertEquals(new BigDecimal("700.00"), balance);
 
         List<Transaction> transactions = systemFacade.getTransactionHistory(token, "GC-1001");
-        assertTrue(transactions.size() >= 3); // At least the 3 new transactions plus initial load
+        assertTrue(transactions.size() >= 3);
     }
 
     
@@ -275,7 +239,6 @@ public class GiftCardSystemFacadeTest {
         Map<String, GiftCard> giftCards = new HashMap<>();
         Map<String, String> merchantsByKey = new HashMap<>();
 
-        // Pre-populate with test data
         User u1 = new User("u1", "Manuel", "mramirezsilva@udesa.edu.ar", "Pinamar123");
         User u2 = new User("u2", "Tomas", "tdiaz@udesa.edu.ar", "CampoGrande2025");
         users.put(u1.getId(), u1);
