@@ -46,6 +46,6 @@ public class GiftCard {
 
     private void assertValidAmount(BigDecimal amount) {
         if (amount.compareTo(BigDecimal.ZERO) <= 0)
-            throw new IllegalArgumentException("amount must be positive");
+            throw new RuntimeException("amount must be positive");
     }
 }
