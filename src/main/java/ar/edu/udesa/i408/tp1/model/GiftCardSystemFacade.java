@@ -10,22 +10,12 @@ public class GiftCardSystemFacade {
     public static String invalidMerchantErrorDescription = "Invalid merchant key";
     public static String giftCardNotOwnedByUserErrorDescription = "Gift card not owned by user";
 
-    private final Map<String, User> users;
-    private final Map<String, GiftCard> giftCards;
-    private final Map<String, String> merchantsByKey;
-    private final Map<String, Session> tokens;
-    private final Authentication authentication;
-    private final Clock clock;
-
-    public GiftCardSystemFacade() {
-        this.users = new HashMap<>();
-        this.giftCards = new HashMap<>();
-        this.merchantsByKey = new HashMap<>();
-        this.tokens = new HashMap<>();
-        this.clock = new Clock();
-        this.authentication = new Authentication(users, clock);
-        preloadData();
-    }
+    private Map<String, User> users;
+    private Map<String, GiftCard> giftCards;
+    private Map<String, String> merchantsByKey;
+    private Map<String, Session> tokens;
+    private Authentication authentication;
+    private Clock clock;
 
     public GiftCardSystemFacade(Map<String, User> users, Map<String, GiftCard> giftCards,
                                 Map<String, String> merchantsByKey, Clock clock) {
@@ -35,37 +25,6 @@ public class GiftCardSystemFacade {
         this.tokens = new HashMap<>();
         this.clock = clock;
         this.authentication = new Authentication(users, clock);
-    }
-
-    private void preloadData() {
-        User u1 = new User("u1", "Manuel", "mramirezsilva@udesa.edu.ar", "Pinamar123");
-        User u2 = new User("u2", "Tomas", "tdiaz@udesa.edu.ar", "CampoGrande2025");
-        User u3 = new User("u3", "Tron", "tron@defender.com", "DefendTheUser");
-        User u4 = new User("u4", "CLU", "clu@perfectsystem.com", "EndOfLine");
-        users.put(u1.getId(), u1);
-        users.put(u2.getId(), u2);
-        users.put(u3.getId(), u3);
-        users.put(u4.getId(), u4);
-
-        GiftCard g1 = new GiftCard("GC-1001", "u1", clock);
-        g1.load(new BigDecimal("1000.00"), "SYSTEM", "initial load");
-        GiftCard g2 = new GiftCard("GC-2001", "u2", clock);
-        g2.load(new BigDecimal("500.00"), "SYSTEM", "initial load");
-        GiftCard g3 = new GiftCard("GC-3001", "u3", clock);
-        g3.load(new BigDecimal("3000.00"), "SYSTEM", "initial load");
-        GiftCard g4 = new GiftCard("GC-4001", "u4", clock);
-        g4.load(new BigDecimal("4000.00"), "SYSTEM", "initial load");
-
-        giftCards.put(g1.getCode(), g1);
-        giftCards.put(g2.getCode(), g2);
-        giftCards.put(g3.getCode(), g3);
-        giftCards.put(g4.getCode(), g4);
-
-        // Merchants
-        merchantsByKey.put("merchant-key-abc", "m-abc");
-        merchantsByKey.put("merchant-key-xyz", "m-xyz");
-        merchantsByKey.put("merchant-key-123", "m-123");
-        merchantsByKey.put("merchant-key-456", "m-456");
     }
 
     public String login(String userId, String password) {
@@ -155,9 +114,4 @@ public class GiftCardSystemFacade {
         }
         return giftCard;
     }
-
-    public Clock clock() { return clock; }
-    public Map<String, User> users() { return users; }
-    public Map<String, GiftCard> giftCards() { return giftCards; }
-    public Map<String, String> merchantsByKey() { return merchantsByKey; }
 }

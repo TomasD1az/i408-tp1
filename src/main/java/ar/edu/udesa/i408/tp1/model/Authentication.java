@@ -1,14 +1,16 @@
 package ar.edu.udesa.i408.tp1.model;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class Authentication {
-    public static final String USER_NOT_FOUND = "User not found";
-    public static final String PASSWORDS_DO_NOT_MATCH = "Passwords do not match";
-    public static final String INVALID_INPUT = "Invalid input";
+    public static String userNotFoundErrorDescription = "User not found";
+    public static String passwordsDoNotMatchErrorDescription = "Passwords do not match";
+    public static String invalidInputErrorDescription = "Invalid input";
 
-    private final Map<String, User> users;
-    private final Clock clock;
+    private Map<String, User> users;
+    private Map<String, Session> sessions = new HashMap<>();
+    private Clock clock;
 
     public Authentication(Map<String, User> users, Clock clock) {
         this.users = Map.copyOf(users);
@@ -17,19 +19,29 @@ public class Authentication {
 
     public Session login(String userId, String password) {
         assertValidInput(userId, password);
-        User user = users.get(userId); // Now looking up by userId, not username
-        if (user == null) {
-            throw new RuntimeException(USER_NOT_FOUND);
+        assertValidUsername(userId);
+        assertValidPassword(password, userId);
+
+        Session session = new Session(userId, clock);
+        sessions.put(userId, session);
+        return session;
+    }
+
+    private void assertValidPassword(String password, String userId) {
+        if (!this.users.get(userId).getPassword().equals(password)) {
+            throw new RuntimeException(passwordsDoNotMatchErrorDescription);
         }
-        if (!user.getPassword().equals(password)) {
-            throw new RuntimeException(PASSWORDS_DO_NOT_MATCH);
+    }
+
+    private void assertValidUsername(String userId) {
+        if (!this.users.containsKey(userId)) {
+            throw new RuntimeException(userNotFoundErrorDescription);
         }
-        return new Session(userId, clock); // Pass userId to token
     }
 
     private void assertValidInput(String userId, String password) {
         if (userId == null || password == null || userId.isEmpty() || password.isEmpty()) {
-            throw new RuntimeException(INVALID_INPUT);
+            throw new RuntimeException(invalidInputErrorDescription);
         }
     }
 }

@@ -4,10 +4,10 @@ import lombok.Getter;
 
 @Getter
 public class User {
-    private final String id;
-    private final String name;
-    private final String email;
-    private final String password;
+    private String id;
+    private String name;
+    private String email;
+    private String password;
 
     public User(String id, String name, String email, String password) {
         this.id = id;

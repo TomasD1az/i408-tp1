@@ -9,11 +9,11 @@ import java.util.List;
 
 @Getter
 public class GiftCard {
-    private final String code;
-    private final String ownerId;
+    private String code;
+    private String ownerId;
     private BigDecimal balance;
-    private final List<Transaction> transactions = new ArrayList<>();
-    private final Clock clock;
+    private List<Transaction> transactions = new ArrayList<>();
+    private Clock clock;
 
     public GiftCard(String code, String ownerId, Clock clock) {
         this.code = code;
@@ -23,16 +23,14 @@ public class GiftCard {
     }
 
     public void load(BigDecimal amount, String merchantId, String description) {
-        if (amount.compareTo(BigDecimal.ZERO) <= 0)
-            throw new IllegalArgumentException("amount must be positive");
+        assertValidAmount(amount);
 
         balance = balance.add(amount);
         transactions.add(new Transaction(merchantId, amount, description, clock));
     }
 
     public boolean spend(BigDecimal amount, String merchantId, String description) {
-        if (amount.compareTo(BigDecimal.ZERO) <= 0)
-            throw new IllegalArgumentException("amount must be positive");
+        assertValidAmount(amount);
 
         if (balance.compareTo(amount) >= 0) {
             balance = balance.subtract(amount);
@@ -44,5 +42,10 @@ public class GiftCard {
 
     public List<Transaction> getTransactionHistory() {
         return Collections.unmodifiableList(transactions);
+    }
+
+    private void assertValidAmount(BigDecimal amount) {
+        if (amount.compareTo(BigDecimal.ZERO) <= 0)
+            throw new IllegalArgumentException("amount must be positive");
     }
 }

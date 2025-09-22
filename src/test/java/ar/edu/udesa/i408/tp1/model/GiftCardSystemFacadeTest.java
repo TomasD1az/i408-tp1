@@ -29,25 +29,25 @@ public class GiftCardSystemFacadeTest {
     @Test
     public void test02CanNotLoginWithInvalidUser() {
         assertThrowsLike(() -> systemFacade().login("invalidUser", "password123"),
-                Authentication.USER_NOT_FOUND);
+                Authentication.userNotFoundErrorDescription);
     }
 
     @Test
     public void test03CanNotLoginWithInvalidPassword() {
         assertThrowsLike(() -> systemFacade().login("u1", "wrongPassword"),
-                Authentication.PASSWORDS_DO_NOT_MATCH);
+                Authentication.passwordsDoNotMatchErrorDescription);
     }
 
     @Test
     public void test04CanNotLoginWithNullCredentials() {
         assertThrowsLike(() -> systemFacade().login(null, "password"),
-                Authentication.INVALID_INPUT);
+                Authentication.invalidInputErrorDescription);
     }
 
     @Test
     public void test05CanNotLoginWithEmptyCredentials() {
         assertThrowsLike(() -> systemFacade().login("u1", ""),
-                Authentication.INVALID_INPUT);
+                Authentication.invalidInputErrorDescription);
     }
 
     @Test
@@ -257,12 +257,9 @@ public class GiftCardSystemFacadeTest {
 
             public LocalDateTime now() {
                 callCount++;
-                // Allow first 3 calls to return base time (for setup + login)
-                // Then return expired time for validation
                 if (callCount <= 3) {
                     return baseTime;
                 } else {
-//                    LocalDateTime expiredTime = baseTime.plusSeconds(301);
                     return baseTime.plusSeconds(301);
                 }
             }

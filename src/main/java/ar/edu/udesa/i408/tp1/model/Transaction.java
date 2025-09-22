@@ -6,10 +6,10 @@ import lombok.Getter;
 
 @Getter
 public class Transaction {
-    private final String merchantId;
-    private final BigDecimal amount;
-    private final LocalDateTime timestamp;
-    private final String description;
+    private String merchantId;
+    private BigDecimal amount;
+    private LocalDateTime timestamp;
+    private String description;
 
     public Transaction(String merchantId, BigDecimal amount, String description, Clock clock) {
         this.merchantId = merchantId;

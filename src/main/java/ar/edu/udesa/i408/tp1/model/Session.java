@@ -6,17 +6,21 @@ import lombok.Getter;
 
 @Getter
 public class Session {
-    private final String token;
-    private final LocalDateTime creationTime;
-    private static final int EXPIRATION_TIME = 300;
-    private final String userId;
-    private final Clock clock;
+    private String token;
+    private LocalDateTime creationTime;
+    private int EXPIRATION_TIME = 300;
+    private String userId;
+    private Clock clock;
 
     public Session(String userId, Clock clock) {
         this.token = UUID.randomUUID().toString().replace("-", "");
         this.clock = clock;
         this.creationTime = clock.now();
         this.userId = userId;
+    }
+
+    public void update(){
+        this.creationTime = clock.now();
     }
 
     public boolean isValid() {
